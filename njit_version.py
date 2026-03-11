@@ -24,6 +24,6 @@ def mandelbrot_numba(width, height, max_iter):
                 z = z*z + c
                 iteration += 1
 
-            image[i,j] = iteration
+            image[i,j] = iteration/max_iter
 
     return image
