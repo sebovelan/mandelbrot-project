@@ -46,9 +46,10 @@ The Mandelbrot set and benchmarking results are visualized using Python plotting
 ## Project Structure
 
 - Mandelbrot implementations in Python
-- Benchmark scripts for runtime measurement
+- Benchmark scripts for runtime measurement. Experimental data CSV file with results in timing.csv
 - Visualization of fractal output and performance results
-- Analysis performed in a Jupyter Notebook
+- Analysis performed in a Jupyter Notebook. Report saved in analysis.ipynb
+- github logs on git_log.txt
 
 ## Purpose
 
