@@ -1,3 +1,13 @@
+2026-03-12 1f5192f Merge https://github.com/sebovelan/mandelbrot-project
+2026-03-12 309e287 Report in analysis.ipynb and git_log.txt added
+
+ analysis.ipynb | 1157 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ git_log.txt    | 1091 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 2248 insertions(+)
+2026-03-12 e73240c Update README.md
+
+ README.md | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 2026-03-12 c3a4129 Fix formatting of Mandelbrot equation in README
 
  README.md | 2 +-
