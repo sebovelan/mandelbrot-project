@@ -1,7 +1,7 @@
 import numpy as np
 import multiprocessing as mp
 import time
-import matplotlib.pyplot as plt
+import pandas as pd
 import os
 
 # --- 1. CORE COMPUTATION (KERNEL) ---
@@ -52,77 +52,72 @@ def mandelbrot_multiprocessing(width, height, max_iter, num_processes, chunk_siz
     return exec_time, result_matrix
 
 # --- 2. BENCHMARKING AND ANALYSIS ---
-def analyze_chunk_sizes(width=1024, height=1024, max_iter=256):
-    print("--- Analyzing Chunk Sizes ---")
+def analyze_chunk_sizes(sizes, max_iter=100):
+    print("--- Analyzing Chunk Sizes for Multiple Resolutions ---")
     processes_list = [2, 4, 8]  # Test for different P
-    chunk_sizes = [1, 2, 5, 10, 25, 50, 100, 200]
+    chunk_sizes = [1, 2, 5, 10, 16, 25, 50, 100, 200] # Kept 16 as it's often an optimal sweet spot
 
-    plt.figure(figsize=(10, 6))
+    results = []
 
-    for p in processes_list:
-        times = []
-        for cs in chunk_sizes:
-            t, _ = mandelbrot_multiprocessing(width, height, max_iter, p, cs)
-            times.append(t)
-            print(f"P={p}, ChunkSize={cs:3d} | Time: {t:.4f} sec")
-        plt.plot(chunk_sizes, times, marker='o', label=f'P={p}')
+    for size in sizes:
+        print(f"\n--- Testing Size: {size}x{size} ---")
+        for p in processes_list:
+            for cs in chunk_sizes:
+                t, _ = mandelbrot_multiprocessing(size, size, max_iter, p, cs)
+                results.append({
+                    "size": size,
+                    "processes": p,
+                    "chunk_size": cs,
+                    "execution_time": t
+                })
+                print(f"Size={size}, P={p}, ChunkSize={cs:3d} | Time: {t:.4f} sec")
 
-    plt.title('Execution Time vs Chunk Size')
-    plt.xlabel('Chunk Size (Number of rows per task)')
-    plt.ylabel('Execution Time (Seconds)')
-    plt.legend()
-    plt.grid(True)
-    plt.savefig('chunk_size_analysis.png')
-    plt.show()
+    df = pd.DataFrame(results)
+    df.to_csv('chunk_analysis_all_sizes.csv', index=False)
+    print("\n-> Saved to chunk_analysis_all_sizes.csv")
+    return df
 
-def analyze_speedup(width=1024, height=1024, max_iter=256, optimal_chunk=10):
-    print("\n--- Analyzing Speedup and Execution Time ---")
+def analyze_speedup(sizes, max_iter=100, optimal_chunk=16):
+    print("\n--- Analyzing Speedup and Execution Time for Multiple Resolutions ---")
     max_cores = mp.cpu_count()
     processes_list = list(range(1, max_cores + 1))
 
-    times = []
+    results = []
 
-    for p in processes_list:
-        t, _ = mandelbrot_multiprocessing(width, height, max_iter, p, optimal_chunk)
-        times.append(t)
-        print(f"Processes={p:2d} | Time: {t:.4f} sec")
+    for size in sizes:
+        print(f"\n--- Testing Size: {size}x{size} ---")
+        times_for_size = []
 
-    # Baseline is P=1 (Sequential equivalent via Pool)
-    baseline_time = times[0]
-    speedups = [baseline_time / t for t in times]
+        for p in processes_list:
+            t, _ = mandelbrot_multiprocessing(size, size, max_iter, p, optimal_chunk)
+            times_for_size.append(t)
+            print(f"Size={size}, Processes={p:2d} | Time: {t:.4f} sec")
 
-    # Plot Execution Time
-    fig, ax1 = plt.subplots(figsize=(10, 6))
+        # Baseline is P=1 (Sequential equivalent via Pool) for this specific size
+        baseline_time = times_for_size[0]
 
-    color = 'tab:red'
-    ax1.set_xlabel('Number of Processes (P)')
-    ax1.set_ylabel('Execution Time (s)', color=color)
-    ax1.plot(processes_list, times, color=color, marker='o', label="Execution Time")
-    ax1.tick_params(axis='y', labelcolor=color)
+        for p, t in zip(processes_list, times_for_size):
+            results.append({
+                "size": size,
+                "processes": p,
+                "execution_time": t,
+                "actual_speedup": baseline_time / t,
+                "ideal_speedup": p
+            })
 
-    # Plot Speedup on a secondary axis
-    ax2 = ax1.twinx()
-    color = 'tab:blue'
-    ax2.set_ylabel('Speed-up', color=color)
-    ax2.plot(processes_list, speedups, color=color, marker='s', label="Actual Speedup")
-    ax2.plot(processes_list, processes_list, color='gray', linestyle='--', label="Ideal Speedup")
-    ax2.tick_params(axis='y', labelcolor=color)
-
-    plt.title('Execution Time and Speed-up vs Number of Processes')
-    fig.tight_layout()
-    ax2.legend(loc='upper left')
-    plt.grid(True)
-    plt.savefig('speedup_analysis.png')
-    plt.show()
+    df = pd.DataFrame(results)
+    df.to_csv('speedup_analysis_all_sizes.csv', index=False)
+    print("\n-> Saved to speedup_analysis_all_sizes.csv")
+    return df
 
 if __name__ == '__main__':
-    # Adjust resolutions for a quicker test or to match your other files (e.g. 4096)
-    RESOLUTION = 1024
-    MAX_ITER = 256
+    # All required scaling sizes
+    SIZES = [1024, 2048, 4096, 8192]
+    MAX_ITER = 100
+    OPTIMAL_CHUNK = 16 # Adjust this if chunk analysis reveals a better number
 
-    # 1. Run Chunk Size Analysis
-    analyze_chunk_sizes(width=RESOLUTION, height=RESOLUTION, max_iter=MAX_ITER)
+    # 1. Run Chunk Size Analysis across all sizes
+    analyze_chunk_sizes(sizes=SIZES, max_iter=MAX_ITER)
 
-    # 2. Run Speedup Analysis (Pick the best chunk size observed in the previous step)
-    # E.g., if 10 was optimal, pass optimal_chunk=10
-    analyze_speedup(width=RESOLUTION, height=RESOLUTION, max_iter=MAX_ITER, optimal_chunk=10)
+    # 2. Run Speedup Analysis across all sizes
+    analyze_speedup(sizes=SIZES, max_iter=MAX_ITER, optimal_chunk=OPTIMAL_CHUNK)

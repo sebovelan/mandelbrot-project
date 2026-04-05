@@ -67,8 +67,8 @@ def run_dask_mandelbrot(full_width, full_height, max_iter, chunks_x, chunks_y):
     return exec_time, result
 
 if __name__ == '__main__':
-    RESOLUTION = 4096 # Use a large resolution so Dask can shine
-    MAX_ITER = 256
+    RESOLUTION = 8192 # Use a large resolution so Dask can shine
+    MAX_ITER = 100
 
     # --- LOCAL EXECUTION ---
     print("Setting up Local Dask Cluster...")
@@ -88,7 +88,7 @@ if __name__ == '__main__':
     local_cluster.close()
 
     # --- CLUSTER EXECUTION (Commented out until you set it up) ---
-    '''
+
 
     print("\nConnecting to Remote Cluster...")
     # Replace with your Scheduler's IP address and port
@@ -97,4 +97,3 @@ if __name__ == '__main__':
     time_cluster, result_cluster = run_dask_mandelbrot(RESOLUTION, RESOLUTION, MAX_ITER, chunks_x, chunks_y)
     print(f"Cluster Execution Time: {time_cluster:.4f} seconds")
     client.close()
-    '''
